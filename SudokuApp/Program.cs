@@ -54,7 +54,7 @@ namespace SudokuApp
 
             //}
 
-            Console.ReadLine()
+            Console.ReadLine();
         }
     }
 }
