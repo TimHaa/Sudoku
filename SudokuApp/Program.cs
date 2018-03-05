@@ -7,8 +7,7 @@ namespace SudokuApp
         static void Main(string[] args)
         {
             SudokuSolver s = new SudokuSolver();
-
-            int[,,] sud = new int[9, 9, 9];
+            int[,,] sud = new int[9, 9, 10];
 
             //generate random numbers
             Random rnd = new Random();
@@ -19,41 +18,8 @@ namespace SudokuApp
                     sud[n, m, 0] = rnd.Next(1, 10);
                 }
             }
-
-            //print sudoku
-            for (int i = 0; i < 9; i++)
-            {
-                Console.Write("| ");
-                for (int j = 0; j < 9; j++)
-                {
-                    Console.Write(sud[j, i, 0] + " ");
-
-                    if (j % 3 == 2) { Console.Write("| "); }
-
-                }
-                Console.Write("\n");
-                if (i % 3 == 2)
-                {
-                    Console.WriteLine("_________________________");
-                    Console.WriteLine();
-                }
-
-
-            }
-
-            s.SolveLogically(sud);  //function: shows which number appears in which quadrant(1 - 9)
-
-            //Console.Write("\n");
-            //for (int i = 0; i < 9; i++)
-            //{
-            //    for (int j = 0; j < 9; j++)
-            //    {
-            //        Console.Write(sud[i, j, 8]+ " ");
-            //    }
-            //    Console.Write("\n");
-
-            //}
-
+            s.Print(sud, 0);
+            s.SolveLogically(sud);
             Console.ReadLine();
         }
     }
