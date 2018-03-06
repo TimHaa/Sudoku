@@ -7,15 +7,22 @@ namespace SudokuApp
     class SudokuSolver
     {
         public SudokuSolver() { }
-
-        public void SolveLogically(int[,,] sudokuInput)
+        
+        public void Solve()
         {
-            //TODO add generatorfunction (saving numbers in respective layer for each entry) and solved condition
-            int nrsFound = 1;
-            while (nrsFound > 0)//TODO change whilecondition to not solved
+            int[,,] sudoku = Generate();
+            int attempts = 6;
+            //int missingNrs = 0;
+            //for (int row = 0; row < 9; row++)
+            //{
+            //    for (int col = 0; col < 9; col++)
+            //    {
+            //        if (sudoku[col,row, 0] == 0) { missingNrs++; }
+            //    }
+            //}
+            while (attempts > 0)
             {
                 Console.WriteLine("whileLoop starts");
-                nrsFound = 0;
                 //foreach number 1 to 9 iterate through the 9 quadrants and check if they contain the number
                 for (int currentNr = 1; currentNr <= 9; currentNr++)
                 {
@@ -27,7 +34,7 @@ namespace SudokuApp
                         int quadStartRow = quadrant / 3 * 3;
                         for (int iterateQuad = 0; iterateQuad < 9; iterateQuad++)
                         {
-                            if (sudokuInput[quadStartCol + iterateQuad % 3, quadStartRow + iterateQuad / 3, 0] == currentNr) { containsCurrNr = true; break; }
+                            if (sudoku[quadStartCol + iterateQuad % 3, quadStartRow + iterateQuad / 3, 0] == currentNr) { containsCurrNr = true; break; }
                         }
                         //If not containing save information about possible position in the layer of said number
                         if (!containsCurrNr)
@@ -36,13 +43,13 @@ namespace SudokuApp
                             {
                                 for (int nineIndex = 0; nineIndex < 9; nineIndex++)
                                 {
-                                    if (sudokuInput[nineIndex, quadStartRow + threeIndex, 0] == currentNr)//TODO maybe optimize so it doesnt consider the current quadrant
+                                    if (sudoku[nineIndex, quadStartRow + threeIndex, 0] == currentNr)//TODO maybe optimize so it doesnt consider the current quadrant
                                     {
-                                        for (int m = 0; m < 3; m++) { sudokuInput[quadStartCol + m, quadStartRow + threeIndex, currentNr] = currentNr; }
+                                        for (int m = 0; m < 3; m++) { sudoku[quadStartCol + m, quadStartRow + threeIndex, currentNr] = currentNr; }
                                     }
-                                    if (sudokuInput[quadStartCol + threeIndex, nineIndex, 0] == currentNr)
+                                    if (sudoku[quadStartCol + threeIndex, nineIndex, 0] == currentNr)
                                     {
-                                        for (int n = 0; n < 3; n++) { sudokuInput[quadStartCol + threeIndex, quadStartRow + n, currentNr] = currentNr; }
+                                        for (int n = 0; n < 3; n++) { sudoku[quadStartCol + threeIndex, quadStartRow + n, currentNr] = currentNr; }
                                     }
                                 }
                             }
@@ -55,7 +62,7 @@ namespace SudokuApp
                             List<int> checkSameCol = new List<int>();
                             for (int l = 0; l < 9; l++)
                             {
-                                if (sudokuInput[quadStartCol + l % 3, quadStartRow + l / 3, currentNr] == 0)
+                                if (sudoku[quadStartCol + l % 3, quadStartRow + l / 3, currentNr] == 0)
                                 {
                                     zeroCount++;
                                     colOfZero = quadStartCol + l % 3;
@@ -64,11 +71,14 @@ namespace SudokuApp
                                     checkSameRow.Add(rowOfZero);
                                 }
                             }
-                            if (zeroCount == 1)//TODO whenever a number is found, delete the space from all other layers
+                            if (zeroCount == 1)
                             {
-                                sudokuInput[colOfZero, rowOfZero, 0] = currentNr;
-                                sudokuInput[colOfZero, rowOfZero, currentNr] = currentNr;
-                                nrsFound++;
+                                sudoku[colOfZero, rowOfZero, 0] = currentNr;
+                                for (int layer = 1; layer < 10; layer++)
+                                {
+                                    sudoku[colOfZero, rowOfZero, layer] = layer;
+                                }
+                                attempts = 6;
                                 Console.WriteLine("col: " + (colOfZero + 1) + " / row: " + (rowOfZero + 1));
                             }
                             else if (zeroCount > 1)//TODO not tested yet
@@ -76,26 +86,30 @@ namespace SudokuApp
                                 bool sameCol = true;
                                 foreach (int possibleCol in checkSameCol) { if (possibleCol != colOfZero) { sameCol = false; } }
                                 bool sameRow = true;
-                                foreach (int possibleCol in checkSameCol) { if (possibleCol != colOfZero) { sameRow = false; } }
+                                foreach (int possibleRow in checkSameRow) { if (possibleRow != colOfZero) { sameRow = false; } }
                                 if (sameCol)
                                 {
                                     for (int n = 0; n < 9; n++)
                                     {
-                                        if (n < quadStartRow || n > (quadStartRow + 2)) { sudokuInput[colOfZero, n, currentNr] = currentNr; }
+                                        if (n < quadStartRow || n > (quadStartRow + 2)) { sudoku[colOfZero, n, currentNr] = currentNr; }
                                     }
                                 }
                                 if (sameRow)
                                 {
                                     for (int n = 0; n < 9; n++)
                                     {
-                                        if (n < quadStartCol || n > (quadStartCol + 2)) { sudokuInput[n, rowOfZero, currentNr] = currentNr; }
+                                        if (n < quadStartCol || n > (quadStartCol + 2)) { sudoku[n, rowOfZero, currentNr] = currentNr; }
                                     }
                                 }
                             }
                         }
                     }
                 }
-                Print(sudokuInput, 0);
+                attempts--;
+            }
+            for (int k = 0; k < 10; k++)
+            {
+                Print(sudoku, k);
             }
         }
 
@@ -118,9 +132,33 @@ namespace SudokuApp
             }
         }
 
+        public int[,,] Generate()
+        {
+            int[,,] sud = new int[9, 9, 10];
+            string lineInput;
+            Console.WriteLine("Input the Sudoku, line by line. No punctuation or spaces allowed, 0's for empty!");
+            for (int row = 0; row < 9; row++)
+            {
+                lineInput = Console.ReadLine();
+                for (int col = 0; col < 9; col++)
+                {
+                    sud[col, row, 0] = Convert.ToInt16(lineInput[col]-'0');
+                    if (sud[col, row, 0] != 0)
+                    {
+                        for(int layer = 1; layer < 10; layer++)
+                        {
+                            sud[col, row, layer] = layer;
+                        }
+                    }
+                }
+            }
+            return sud;
+        }
+
         public void SolveTest(int[,,] input)
         {
-
+            
+            
         }
     }
 }
