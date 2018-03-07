@@ -10,6 +10,7 @@ namespace SudokuApp
         
         public void Solve()
         {
+            //TODO for every zero check which nrs are possible and add them to a list as 1 element. If the nr of these elements == element.count delete the possibilities from every other layer.
             int[,,] sudoku = Generate();
             int attempts = 6;
             //int missingNrs = 0;
