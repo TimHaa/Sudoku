@@ -6,10 +6,17 @@ namespace SudokuApp
     {
         static void Main(string[] args)
         {
+            
             SudokuSolver s = new SudokuSolver();
             s.Solve();
-            
-            //int[,,] sud = new int[9, 9, 10];
+
+
+            //string[,] sarr = new string[9, 9];
+            //sarr[3, 2] = "13479";
+            //for (int i = 1; i < 10; i++)
+            //{
+            //    if (!sarr[3,2].Contains(i.ToString())) { Console.WriteLine(i); }
+            //}
 
             ////generate random numbers
             //Random rnd = new Random();
