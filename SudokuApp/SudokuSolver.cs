@@ -10,9 +10,9 @@ namespace SudokuApp
         
         public void Solve()
         {
-            //TODO for every zero check which nrs are possible and add them to a list as 1 element. If the nr of these elements == element.count delete the possibilities from every other layer.
             int[,,] sudoku = Generate();
             int attempts = 4;
+            //TODO better wincondition:
             //int missingNrs = 0;
             //for (int row = 0; row < 9; row++)
             //{
@@ -107,15 +107,13 @@ namespace SudokuApp
                 if (attempts <= 2)
                 {
                     CombinationByNr(sudoku);
-                    CombinationByCell(sudoku);//unintuitive attemptscounter
+                    CombinationByCell(sudoku);
                     ExclusionPrinciple(sudoku);
+                    ExclusionPrinciple(sudoku);//TODO better wincondition
                 }
             }
-            
-            for (int k = 0; k < 10; k++)
-            {
-                Print(sudoku, k);
-            }
+            Print(sudoku, 0);
+            Console.ReadLine();
         }
 
         public void ExclusionPrinciple(int[,,] sudoku)//check every cell if only 1 number is possible. If yes fill in.
@@ -142,121 +140,70 @@ namespace SudokuApp
             }
         }
 
-        public void CombinationByNr(int[,,] sudoku)//TODO get working as intended!
-        {//check for every number which possible coordinates it has (per row, col, quad). If it shares its coordinate these numbers belong to the coordinates
-            for (int k = 0; k < 10; k++)
+        public void CombinationByNr(int[,,] sudoku)//TODO Add function for triangle pairs (eg. 2 at 3 and 4; 5 at 3 and 6; 9 at 4 and 6).
+        //They are not contained by a single one of them but exclude all other numbers. CombinationByCell does this only if the remaining numbers are possible for all remaining cells.
+        {
+            //If number x shares its possible coords (per row/col/quad) with enough other nrs y,z,...
+            //it belongs to these coordinates -> delete x,y,z,.. from other coordinates
+            for (int i = 0; i < 9; i++)//iterate through rows, cols and quads
             {
-                Print(sudoku, k);
-            }
-            for (int i = 0; i < 9; i++) 
-            {
+                //check for every number which possible coordinates it has (per row, col, quad).
                 string[] cellsPerRow = new string[9];
-                
                 string[] cellsPerCol = new string[9];
-                
                 string[] cellsPerQuad = new string[9];
-                
                 int quadStartCol = i % 3 * 3;
                 int quadStartRow = i / 3 * 3;
                 for (int nr = 0; nr < 9; nr++)
                 {
-                    string nrRow = "";
-                    string nrCol = "";
-                    string nrQuad = "";
+                    string cellsPerRowCurrNr = "";
+                    string cellsPerColCurrNr = "";
+                    string cellsPerQuadCurrNr = "";
                     for (int j = 0; j < 9; j++)
                     {
-                        if (sudoku[j, i, nr + 1] == 0) { nrRow += j.ToString(); }//rows
-                        if (sudoku[i, j, nr + 1] == 0) { nrCol += j.ToString(); }//cols
-                        
-                        if (sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr + 1] == 0) { nrQuad += j.ToString(); }//quadrants
+                        if (sudoku[j, i, nr + 1] == 0) { cellsPerRowCurrNr += j.ToString(); }//rows
+                        if (sudoku[i, j, nr + 1] == 0) { cellsPerColCurrNr += j.ToString(); }//cols
+                        if (sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr + 1] == 0) { cellsPerQuadCurrNr += j.ToString(); }//quadrants
                     }
-                    cellsPerRow[nr] = nrRow;
-                    cellsPerCol[nr] = nrCol;
-                    cellsPerQuad[nr] = nrQuad;
+                    cellsPerRow[nr] = cellsPerRowCurrNr;
+                    cellsPerCol[nr] = cellsPerColCurrNr;
+                    cellsPerQuad[nr] = cellsPerQuadCurrNr;
                 }
-                Console.Write("Row " + i + ": ");
-                for (int k = 0; k < 9; k++)//test
-                {
-                    Console.Write(cellsPerRow[k] + ",");
-                }
-
-                Console.Write("Col " + i + ": ");
-                for (int k = 0; k < 9; k++)//test
-                {
-                    Console.Write(cellsPerCol[k] + ",");
-                }
-
-                Console.Write("Quad " + i + ": ");
-                for (int k = 0; k < 9; k++)//test
-                {
-                    Console.Write(cellsPerQuad[k] + ",");
-                }
-
-                Console.WriteLine();
                 for (int currNr = 0; currNr < 9; currNr++)
                 {
-                    int rowCount = 0;
-                    int colCount = 0;
-                    int quadCount = 0;
+                    int rowCountContained = 0;
+                    int colCountContained = 0;
+                    int quadCountContained = 0;
                     int zeroCountRow = 0;
                     int zeroCountCol = 0;
                     int zeroCountQuad = 0;
-                    for (int pos = 0; pos < 9; pos++)
+                    for (int nr = 0; nr < 9; nr++)
                     {
-                        bool containsRow = cellsPerRow[pos] != String.Empty;
+                        bool containsRow = cellsPerRow[nr] != String.Empty;
+                        bool containsCol = cellsPerCol[nr] != String.Empty;
+                        bool containsQuad = cellsPerQuad[nr] != String.Empty;
                         if (!containsRow) { zeroCountRow++; }
-                        for (int x = 0; x < cellsPerRow[pos].Length; x++)
-                        {
-                            if (!(cellsPerRow[currNr].Contains(cellsPerRow[pos][x].ToString()))) { containsRow = false; }
-                        }
-                        if (containsRow) { rowCount++; }
-                        
-
-                        bool containsCol = cellsPerCol[pos] != String.Empty;
-                        if (!containsCol) { zeroCountCol++;}
-                        for (int x = 0; x < cellsPerCol[pos].Length; x++)
-                        {
-                            if (!(cellsPerCol[currNr].Contains(cellsPerCol[pos][x].ToString()))) { containsCol = false; }
-                        }
-                        if (containsCol) { colCount++; }
-                        
-
-                        bool containsQuad = cellsPerQuad[pos] != String.Empty;
+                        if (!containsCol) { zeroCountCol++; }
                         if (!containsQuad) { zeroCountQuad++; }
-                        for (int x = 0; x < cellsPerQuad[pos].Length; x++)
+                        for (int x = 0; x < cellsPerRow[nr].Length; x++)
                         {
-                            if (!(cellsPerQuad[currNr].Contains(cellsPerQuad[pos][x].ToString()))) { containsQuad = false; }
+                            if (!(cellsPerRow[currNr].Contains(cellsPerRow[nr][x].ToString()))) { containsRow = false; }
                         }
-                        if (containsQuad) { quadCount++; }
-                        
-                        //if(cellsPerCol[currNr] != null && cellsPerCol[currNr] == cellsPerCol[pos]) { colCount++; }
-                        //if(cellsPerQuad[currNr] != null && cellsPerQuad[currNr] == cellsPerQuad[pos]) { quadCount++; }
+                        for (int x = 0; x < cellsPerCol[nr].Length; x++)
+                        {
+                            if (!(cellsPerCol[currNr].Contains(cellsPerCol[nr][x].ToString()))) { containsCol = false; }
+                        }
+                        for (int x = 0; x < cellsPerQuad[nr].Length; x++)
+                        {
+                            if (!(cellsPerQuad[currNr].Contains(cellsPerQuad[nr][x].ToString()))) { containsQuad = false; }
+                        }
+                        if (containsRow) { rowCountContained++; }
+                        if (containsCol) { colCountContained++; }
+                        if (containsQuad) { quadCountContained++; }
                     }
-                    if (cellsPerRow[currNr] != String.Empty && rowCount == cellsPerRow[currNr].Length && rowCount != (9 - zeroCountRow))//rows
+                    if (cellsPerRow[currNr] != String.Empty && rowCountContained == cellsPerRow[currNr].Length && rowCountContained != (9 - zeroCountRow))//rows
                     {
-                        Console.WriteLine(cellsPerRow[currNr] + " row");
                         for (int nr = 1; nr < 10; nr++)
                         {
-                            //unnessecary because its the condition
-
-                            //if (cellsPerRow[nr - 1] == cellsPerRow[currNr])
-                            //{
-                            //    for (int col = 0; col < 9; col++)
-                            //    {
-                            //        if (!(cellsPerRow[currNr].Contains(col.ToString()))) { sudoku[col, i, nr] = nr; }
-                            //    }
-                            //}
-                            //else if
-
-
-                            //if (cellsPerRow[nr - 1] != cellsPerRow[currNr])
-                            //{
-                            //    for (int col = 0; col < 9; col++)
-                            //    {
-                            //        if (cellsPerRow[currNr].Contains(col.ToString())) { sudoku[col, i, nr] = nr; }
-                            //    }
-                            //}
-
                             bool containsRow = true;
                             for (int x = 0; x < cellsPerRow[nr - 1].Length; x++)
                             {
@@ -264,40 +211,17 @@ namespace SudokuApp
                             }
                             if (!containsRow)
                             {
-                                for (int j = 0; j < 9; j++)
+                                for (int col = 0; col < 9; col++)
                                 {
-                                    if (cellsPerRow[currNr].Contains(j.ToString())) { sudoku[j, i, nr] = nr; Console.WriteLine(i +" " + j + " " + nr); }
+                                    if (cellsPerRow[currNr].Contains(col.ToString())) { sudoku[col, i, nr] = nr; }
                                 }
                             }
                         }
-                        for (int k = 0; k < 10; k++)
-                        {
-                            Print(sudoku, k);
-                        }
-                    }//if changed
-                    if (cellsPerCol[currNr] != String.Empty && colCount == cellsPerCol[currNr].Length && colCount != (9 - zeroCountCol))//cols
+                    }
+                    if (cellsPerCol[currNr] != String.Empty && colCountContained == cellsPerCol[currNr].Length && colCountContained != (9 - zeroCountCol))//cols
                     {
-                        Console.WriteLine(cellsPerCol[currNr] + " col");
                         for (int nr = 1; nr < 10; nr++)
                         {
-                            //if (cellsPerCol[nr - 1] == cellsPerCol[currNr])
-                            //{
-                            //    for (int row = 0; row < 9; row++)
-                            //    {
-                            //        if (!(cellsPerCol[currNr].Contains(row.ToString()))) { sudoku[i, row, nr] = nr; }
-                            //    }
-                            //}
-                            //else 
-
-
-                            //if (cellsPerCol[nr - 1] != cellsPerCol[currNr])
-                            //{
-                            //    for (int row = 0; row < 9; row++)
-                            //    {
-                            //        if (cellsPerCol[currNr].Contains(row.ToString())) { sudoku[i, row, nr] = nr; }
-                            //    }
-                            //}
-
                             bool containsCol = true;
                             for (int x = 0; x < cellsPerCol[nr - 1].Length; x++)
                             {
@@ -305,41 +229,17 @@ namespace SudokuApp
                             }
                             if (!containsCol)
                             {
-                                for (int j = 0; j < 9; j++)
+                                for (int row = 0; row < 9; row++)
                                 {
-                                    if (cellsPerCol[currNr].Contains(j.ToString())) { sudoku[i, j, nr] = nr; Console.WriteLine(i + " " + j + " " + nr); }
+                                    if (cellsPerCol[currNr].Contains(row.ToString())) { sudoku[i, row, nr] = nr; }
                                 }
                             }
                         }
-                        for (int k = 0; k < 10; k++)
-                        {
-                            Print(sudoku, k);
-                        }
                     }
-                    if (cellsPerQuad[currNr] != String.Empty && quadCount == cellsPerQuad[currNr].Length && quadCount != (9- zeroCountQuad))//quadrants
+                    if (cellsPerQuad[currNr] != String.Empty && quadCountContained == cellsPerQuad[currNr].Length && quadCountContained != (9- zeroCountQuad))//quadrants
                     {
-                        Console.WriteLine(cellsPerQuad[currNr] + " quad");
                         for (int nr = 1; nr < 10; nr++)
                         {
-
-                            //if (cellsPerQuad[nr - 1] == cellsPerQuad[currNr])
-                            //{
-                            //    for (int j = 0; j < 9; j++)
-                            //    {
-                            //        if (!(cellsPerQuad[currNr].Contains(j.ToString()))) { sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr] = nr; }
-                            //    }
-                            //}
-                            //else 
-
-
-                            //if (cellsPerQuad[nr - 1] != cellsPerQuad[currNr])
-                            //{
-                            //    for (int j = 0; j < 9; j++)
-                            //    {
-                            //        if (cellsPerQuad[currNr].Contains(j.ToString())) { sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr] = nr; }
-                            //    }
-                            //}
-
                             bool containsQuad = true;
                             for (int x = 0; x < cellsPerQuad[nr-1].Length; x++)
                             {
@@ -349,18 +249,13 @@ namespace SudokuApp
                             {
                                 for (int j = 0; j < 9; j++)
                                 {
-                                    if (cellsPerQuad[currNr].Contains(j.ToString())) { sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr] = nr; Console.WriteLine((quadStartCol + j % 3) + " " + (quadStartRow + j / 3) + " " + nr); }
+                                    if (cellsPerQuad[currNr].Contains(j.ToString())) { sudoku[quadStartCol + j % 3, quadStartRow + j / 3, nr] = nr; }
                                 }
                             }
-                        }
-                        for (int k = 0; k < 10; k++)
-                        {
-                        Print(sudoku, k);
                         }
                     }
                 }
             }
-            
         }
 
         public void CombinationByCell(int[,,] sudoku)
@@ -477,25 +372,6 @@ namespace SudokuApp
             }
         }
 
-        public void Print2d(string[,] sud)//just for testing
-        {
-            for (int i = 0; i < 9; i++)
-            {
-                Console.Write("| ");
-                for (int j = 0; j < 9; j++)
-                {
-                    Console.Write(sud[j, i] + " ");
-                    if (j % 3 == 2) { Console.Write("| "); }
-                }
-                Console.Write("\n");
-                if (i % 3 == 2)
-                {
-                    Console.WriteLine("_________________________");
-                    Console.WriteLine();
-                }
-            }
-        }
-
         public int[,,] Generate()
         {
             int[,,] sudoku = new int[9, 9, 10];
@@ -515,7 +391,7 @@ namespace SudokuApp
                     }
                 }
             }
-            return sudoku;
+            return sudoku;//QUESTION is this necessary?
         }
 
         private void Fill(int[,,] sudoku, int nrFound, int col, int row)
@@ -527,12 +403,6 @@ namespace SudokuApp
                 sudoku[pos, row, nrFound] = nrFound;
                 sudoku[col, pos, nrFound] = nrFound;
             }
-        }
-
-        public void SolveTest(int[,,] input)
-        {
-            
-            
         }
     }
 }
